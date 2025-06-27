@@ -1,9 +1,17 @@
 package models
 
+import "time"
+
 type User struct {
-	ID       uint   `gorm:"primaryKey" json:"id"`
-	FName    string `json:"fname" validate:"required,max=50,min=2"`
-	LName    string `json:"lname" validate:"required,max=50,min=2"`
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,validPass"`
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	Username  string    `gorm:"not null" json:"username" validate:"required,max=50,min=2"`
+	Email     string    `gorm:"not null" json:"email" validate:"required,email"`
+	Password  string    `gorm:"not null" json:"password" validate:"required,validPass"`
+	Role      string    `gorm:"default:'reader'"` //reader, admin, editor
+	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time `json:"created_at"`
+	DeletedAt time.Time `json:"-"`
+	Posts     []Post    `gorm:"foreignKey:UserId"`
+	Comments  []Comment
+	Likes     []Like
 }
