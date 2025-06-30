@@ -63,14 +63,9 @@ func JWTMiddleware() gin.HandlerFunc {
 				} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
 					c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Token has expired or is not yet valid."})
 				} else {
-					// This 'else' catches other validation errors wrapped within ValidationError,
-					// e.g., ValidationErrorSignatureInvalid if not explicitly checked first,
-					// or issues with claims parsing/conversion.
 					c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Failed to parse token."})
 				}
 			} else {
-				// This 'else' catches any other error types returned by ParseWithClaims
-				// that are NOT jwt.ValidationError (less common for standard validation issues).
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authentication failed."}) // Generic fallback
 			}
 			return
