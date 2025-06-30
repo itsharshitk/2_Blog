@@ -56,29 +56,31 @@ func JWTMiddleware() gin.HandlerFunc {
 		// 	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": fmt.Sprintf("Invalid token: %v", err.Error())})
 		// 	return
 		// }
-		if err != nil {
-			if ve, ok := err.(*jwt.ValidationError); ok { // Type assertion to check if it's a ValidationError
-				if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-					c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format."})
-				} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
-					c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Token has expired or is not yet valid."})
-				} else {
-					// This 'else' catches other validation errors wrapped within ValidationError,
-					// e.g., ValidationErrorSignatureInvalid if not explicitly checked first,
-					// or issues with claims parsing/conversion.
-					c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Failed to parse token."})
-				}
-			} else {
-				// This 'else' catches any other error types returned by ParseWithClaims
-				// that are NOT jwt.ValidationError (less common for standard validation issues).
-				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authentication failed."}) // Generic fallback
-			}
-			return
-		}
+
 		// if err != nil {
-		// 	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		// 	if ve, ok := err.(*jwt.ValidationError); ok { // Type assertion to check if it's a ValidationError
+		// 		if ve.Errors&jwt.ValidationErrorMalformed != 0 {
+		// 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format."})
+		// 		} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
+		// 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Token has expired or is not yet valid."})
+		// 		} else {
+		// 			// This 'else' catches other validation errors wrapped within ValidationError,
+		// 			// e.g., ValidationErrorSignatureInvalid if not explicitly checked first,
+		// 			// or issues with claims parsing/conversion.
+		// 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Failed to parse token."})
+		// 		}
+		// 	} else {
+		// 		// This 'else' catches any other error types returned by ParseWithClaims
+		// 		// that are NOT jwt.ValidationError (less common for standard validation issues).
+		// 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Authentication failed."}) // Generic fallback
+		// 	}
 		// 	return
 		// }
+
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			return
+		}
 
 		// if !token.Valid {
 		// 	c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid Token"})
@@ -89,9 +91,8 @@ func JWTMiddleware() gin.HandlerFunc {
 		c.Set("username", claims.Username)
 		c.Set("email", claims.Email)
 
-		fmt.Printf("Authenticated user: %s\n", c.MustGet("userID"))
+		fmt.Printf("Authenticated user: %s\n", c.MustGet("userId"))
 
-		// Call the next handler in the chain
 		c.Next()
 	}
 }
