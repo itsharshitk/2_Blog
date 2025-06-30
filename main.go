@@ -3,13 +3,15 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/itsharshitk/2_Blog/db"
-	"github.com/itsharshitk/2_Blog/routes"
+	"github.com/itsharshitk/2_Blog/route"
+	"github.com/itsharshitk/2_Blog/util"
 )
 
 func main() {
 	r := gin.Default()
 	db.ConnectDB()
-	routes.GetRoutes(r)
+	util.InitValidations()
+	route.GetRoutes(r)
 
 	r.Run(":8080")
 }

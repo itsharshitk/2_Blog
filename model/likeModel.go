@@ -1,4 +1,4 @@
-package models
+package model
 
 import "time"
 
@@ -9,5 +9,5 @@ type Like struct {
 	IsLiked   bool      `json:"is_liked" validate:"required"`
 	UpdatedAt time.Time `json:"updated_at"`
 	CreatedAt time.Time `json:"created_at"`
-	DeletedAt time.Time `json:"-"`
+	DeletedAt time.Time `gorm:"index" json:"-"`
 }

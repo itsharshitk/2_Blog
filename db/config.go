@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/itsharshitk/2_Blog/model"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -27,7 +28,7 @@ func ConnectDB() error {
 
 	dsn := user + ":" + pass + "@tcp(" + host + ":" + port + ")/" + dbName + "?charset=utf8&parseTime=True&loc=Local"
 
-	DB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 
 	if err != nil {
 		log.Fatal("Error in database connection: ", err)
@@ -45,6 +46,18 @@ func ConnectDB() error {
 	}
 
 	fmt.Println("Database Connected Successfully.")
+
+	allModels := []any{
+		&model.User{},
+		&model.Post{},
+		&model.Comment{},
+		&model.Like{},
+	}
+
+	if err := DB.AutoMigrate(allModels...); err != nil {
+		log.Fatalf("Failed to Automigrate the databases: %v", err)
+		return err
+	}
 
 	return nil
 }

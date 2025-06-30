@@ -1,4 +1,4 @@
-package models
+package model
 
 import "time"
 
@@ -10,7 +10,7 @@ type Post struct {
 	Slug      string    `json:"slug" validate:"required"`
 	UpdatedAt time.Time `json:"updated_at"`
 	CreatedAt time.Time `json:"created_at"`
-	DeletedAt time.Time `json:"-"`
+	DeletedAt time.Time `gorm:"index" json:"-"`
 	Likes     []Like    `gorm:"foreignKey:PostId"`
 	Comments  []Comment `gorm:"foreignKey:PostId"`
 }
