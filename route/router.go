@@ -11,6 +11,7 @@ import (
 func GetRoutes(r *gin.Engine) {
 	r.POST("/login", controller.Login)
 	r.POST("/signup", controller.SignUp)
+	r.POST("/refresh", controller.RefreshHandler)
 
 	p := r.Group("/api/v1", middleware.JWTMiddleware())
 

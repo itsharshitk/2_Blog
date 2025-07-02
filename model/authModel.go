@@ -8,17 +8,18 @@ import (
 )
 
 type User struct {
-	ID        uint           `gorm:"primaryKey" json:"id"`
-	Username  string         `gorm:"not null" json:"username" validate:"required,max=50,min=2"`
-	Email     string         `gorm:"not null;unique" json:"email" validate:"required,email"`
-	Password  string         `gorm:"not null" json:"password" validate:"required,validPass"`
-	Role      string         `gorm:"type:enum('reader','admin','editor');default:'reader'" json:"role"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	CreatedAt time.Time      `json:"created_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
-	Posts     []Post         `gorm:"foreignKey:UserId"`
-	Comments  []Comment      `gorm:"foreignKey:UserId"`
-	Likes     []Like         `gorm:"foreignKey:UserId"`
+	ID           uint           `gorm:"primaryKey" json:"id"`
+	Username     string         `gorm:"not null" json:"username" validate:"required,max=50,min=2"`
+	Email        string         `gorm:"not null;unique" json:"email" validate:"required,email"`
+	Password     string         `gorm:"not null" json:"password" validate:"required,validPass"`
+	Role         string         `gorm:"type:enum('reader','admin','editor');default:'reader'" json:"role"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	CreatedAt    time.Time      `json:"created_at"`
+	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
+	RefreshToken []RefreshToken `gorm:"foreignKey:UserId"`
+	Posts        []Post         `gorm:"foreignKey:UserId"`
+	Comments     []Comment      `gorm:"foreignKey:UserId"`
+	Likes        []Like         `gorm:"foreignKey:UserId"`
 }
 
 type LoginRequest struct {
@@ -47,4 +48,13 @@ type JWTClaims struct {
 	Email    string `json:"email"`
 	Role     string `json:"role"`
 	jwt.RegisteredClaims
+}
+
+type RefreshToken struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	UserId    uint      `gorm:"index" json:"user_id"`
+	Token     string    `gorm:"uniqueIndex" json:"token"`
+	ExpiresAt time.Time `json:"expires_at"`
+	Revoked   bool      `gorm:"default:false" json:"revoked"`
+	CreatedAt time.Time `json:"created_at"`
 }

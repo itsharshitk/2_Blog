@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -145,3 +146,111 @@ func SignUp(c *gin.Context) {
 		Data:    newUser,
 	})
 }
+
+func RefreshHandler(c *gin.Context) {
+	var req struct {
+		RefreshToken string `json:"refresh_token"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		return
+	}
+
+	var rt model.RefreshToken
+	if result := db.DB.Where("token = ? AND revoked = ?", req.RefreshToken, false).First(&rt).Error; result != nil {
+		c.JSON(http.StatusUnauthorized, model.Resp{
+			Status:       http.StatusUnauthorized,
+			Message:      "Invalid Refresh Token",
+			ErrorDetails: result.Error(),
+		})
+		return
+	}
+
+	if time.Now().After(rt.ExpiresAt) {
+		c.JSON(http.StatusUnauthorized, model.Resp{
+			Status:  http.StatusUnauthorized,
+			Message: "Refresh Token Expired",
+		})
+		return
+	}
+
+	var user model.User
+	if err := db.DB.Where("id = ?", rt.UserId).First(&user).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, model.Resp{
+			Status:       http.StatusInternalServerError,
+			Message:      "Something went wrong",
+			ErrorDetails: err.Error(),
+		})
+		return
+	}
+
+	JWTtoken, err := util.GenerateJWTToken(user)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.Resp{
+			Status:  http.StatusInternalServerError,
+			Message: "Failed to create JWT token",
+		})
+		return
+	}
+
+	rt.Revoked = true
+
+	if err := db.DB.Save(&rt).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, model.Resp{
+			Status:  http.StatusInternalServerError,
+			Message: "Error on revoking refresh token",
+		})
+		return
+	}
+
+	newRefreshToken, err := util.GenerateRefreshToken()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.Resp{
+			Status:  http.StatusInternalServerError,
+			Message: "Failed to generate refresh token",
+		})
+		return
+	}
+
+	reftkn := model.RefreshToken{
+		UserId:    rt.UserId,
+		Token:     newRefreshToken,
+		ExpiresAt: time.Now().Add(time.Hour * 24 * 7),
+	}
+
+	if err := db.DB.Create(&reftkn).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, model.Resp{
+			Status:  http.StatusInternalServerError,
+			Message: "Failed to save refresh token",
+		})
+		return
+	}
+
+	var data struct {
+		JWTToken     string `json:"jwt_token"`
+		RefreshToken string `json:"refresh_token"`
+	}
+	data.JWTToken = JWTtoken
+	data.RefreshToken = newRefreshToken
+
+	c.JSON(http.StatusOK, model.Resp{
+		Status:  http.StatusOK,
+		Message: "token generated successfully",
+		Data:    data,
+	})
+
+}
+
+// func LogoutHandler(c *gin.Context) {
+// 	var req struct {
+// 		RefreshToken string `json:"refresh_token"`
+// 	}
+// 	if err := c.BindJSON(&req); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+// 		return
+// 	}
+
+// 	db.DB.Model(&model.RefreshToken{}).Where("token = ?", req.RefreshToken).Update("revoked", true)
+
+// 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
+// }
