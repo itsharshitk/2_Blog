@@ -60,24 +60,50 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	token, err := util.GenerateJWTToken(foundUser)
+	JWTtokenStr, err := util.GenerateJWTToken(foundUser)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, model.Resp{
 			Status:       http.StatusInternalServerError,
-			Message:      "Token Generation Failed",
+			Message:      "JWT Token Generation Failed",
 			ErrorDetails: err,
 		})
+		return
+	}
+
+	RefreshTokenStr, err := util.GenerateRefreshToken()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.Resp{
+			Status:       http.StatusInternalServerError,
+			Message:      "Refresh Token Generation Failed",
+			ErrorDetails: err,
+		})
+		return
+	}
+
+	var reftkn model.RefreshToken
+
+	reftkn.UserId = foundUser.ID
+	reftkn.Token = RefreshTokenStr
+	reftkn.ExpiresAt = time.Now().Add(time.Hour * 24 * 7)
+
+	if err := db.DB.Save(&reftkn).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, model.Resp{
+			Status:  http.StatusInternalServerError,
+			Message: "Failed to save Refresh Token",
+		})
+		return
 	}
 
 	c.JSON(http.StatusOK, model.Resp{
 		Status:  http.StatusOK,
 		Message: "Login successful",
 		Data: model.UserResponse{
-			ID:       foundUser.ID,
-			Username: foundUser.Username,
-			Email:    foundUser.Email,
-			Role:     foundUser.Role,
-			Token:    token,
+			ID:           foundUser.ID,
+			Username:     foundUser.Username,
+			Email:        foundUser.Email,
+			Role:         foundUser.Role,
+			JWTToken:     JWTtokenStr,
+			RefreshToken: RefreshTokenStr,
 		},
 	})
 
@@ -241,16 +267,42 @@ func RefreshHandler(c *gin.Context) {
 
 }
 
-// func LogoutHandler(c *gin.Context) {
-// 	var req struct {
-// 		RefreshToken string `json:"refresh_token"`
-// 	}
-// 	if err := c.BindJSON(&req); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
-// 		return
-// 	}
+func Logout(c *gin.Context) {
+	var rt struct {
+		RefreshToken string `json:"refresh_token"`
+	}
 
-// 	db.DB.Model(&model.RefreshToken{}).Where("token = ?", req.RefreshToken).Update("revoked", true)
+	if err := c.ShouldBindJSON(&rt); err != nil {
+		c.JSON(http.StatusInternalServerError, model.Resp{
+			Status:       http.StatusInternalServerError,
+			Message:      "Something went wrong",
+			ErrorDetails: err.Error(),
+		})
+		return
+	}
 
-// 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
-// }
+	result := db.DB.Model(&model.RefreshToken{}).Where("token = ?", rt.RefreshToken).Update("revoked", true)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, model.Resp{
+			Status:       http.StatusInternalServerError,
+			Message:      "Failed to revoke token",
+			ErrorDetails: result.Error.Error(),
+		})
+		return
+	}
+
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, model.Resp{
+			Status:  http.StatusNotFound,
+			Message: "Token not found or already revoked",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, model.Resp{
+		Status:  http.StatusOK,
+		Message: "Logged out successfully",
+	})
+
+}

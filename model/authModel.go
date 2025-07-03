@@ -35,11 +35,12 @@ type SignUpRequest struct {
 }
 
 type UserResponse struct {
-	ID       uint   `json:"id"`
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Role     string `json:"role"`
-	Token    string `json:"token"`
+	ID           uint   `json:"id"`
+	Username     string `json:"username"`
+	Email        string `json:"email"`
+	Role         string `json:"role"`
+	JWTToken     string `json:"jwt_token"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type JWTClaims struct {
