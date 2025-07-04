@@ -112,7 +112,6 @@ func Slugify(title string) string {
 	title = strings.ToLower(title)
 
 	title = RemoveAccents(title)
-	fmt.Println("" + title)
 
 	// Replace non-alphanumeric characters with spaces
 	re := regexp.MustCompile(`[^\w\s-]`)
