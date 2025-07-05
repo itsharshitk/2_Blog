@@ -1,11 +1,15 @@
 package util
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
 	"regexp"
+	"strings"
 	"time"
+	"unicode"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
@@ -72,7 +76,7 @@ func GenerateJWTToken(user model.User) (string, error) {
 		Email:    user.Email,
 		Role:     user.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 7 * 24)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			Issuer:    "2_Blog",
 			Subject:   fmt.Sprintf("%d", user.ID), // converting uint to string
@@ -92,4 +96,44 @@ func GenerateJWTToken(user model.User) (string, error) {
 	}
 
 	return tokenString, err
+}
+
+func GenerateRefreshToken() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return base64.URLEncoding.EncodeToString(b), nil
+}
+
+// Create Slugs
+func Slugify(title string) string {
+
+	title = strings.ToLower(title)
+
+	title = RemoveAccents(title)
+
+	// Replace non-alphanumeric characters with spaces
+	re := regexp.MustCompile(`[^\w\s-]`)
+	title = re.ReplaceAllString(title, "")
+
+	// Replace spaces and multiple hyphens with a single hyphen
+	re = regexp.MustCompile(`[-\s]+`)
+	title = re.ReplaceAllString(title, "-")
+
+	// Trim hyphens from start and end
+	return strings.Trim(title, "-")
+}
+
+// removeAccents removes accents from characters in a string
+func RemoveAccents(str string) string {
+	result := ""
+	for _, char := range str {
+		if unicode.IsLetter(char) {
+			result += string(char)
+		} else {
+			result += " "
+		}
+	}
+	return strings.TrimSpace(result)
 }
