@@ -52,6 +52,7 @@ func ConnectDB() error {
 		&model.Post{},
 		&model.Comment{},
 		&model.Like{},
+		&model.RefreshToken{},
 	}
 
 	if err := DB.AutoMigrate(allModels...); err != nil {
