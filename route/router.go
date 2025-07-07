@@ -17,4 +17,6 @@ func GetRoutes(r *gin.Engine) {
 
 	p.POST("/post", controller.CreatePost)
 
+	p.POST("/comment", controller.AddComment)
+
 }
