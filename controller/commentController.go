@@ -54,9 +54,12 @@ func AddComment(c *gin.Context) {
 	})
 }
 
-// func CommentOnPost(c *gin.Context) {
-// 	postId := c.Param("postId")
-// }
+func CommentsOnPost(c *gin.Context) {
+	postId := c.Param("postId")
+
+	comments := model.Comment{}
+	result := db.DB.Where("post_id = ?", postId).Find(&comments)
+}
 
 func UpdateComment(c *gin.Context) {
 

@@ -19,6 +19,8 @@ func GetRoutes(r *gin.Engine) {
 
 	p.POST("/comment/:postId", controller.AddComment)
 
+	p.GET("/comment/:postId", controller.CommentsOnPost)
+
 	p.PATCH("/comment/:commentId", controller.UpdateComment)
 
 }
