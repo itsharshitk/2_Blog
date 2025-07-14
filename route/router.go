@@ -16,7 +16,9 @@ func GetRoutes(r *gin.Engine) {
 	p.POST("/logout", controller.Logout)
 
 	p.POST("/post", controller.CreatePost)
-
+	p.GET("/posts", controller.GetAllPosts)
+	p.GET("/post/:postId", controller.PostById)
+	p.DELETE("/delete/:postId", controller.DelPost)
 	p.POST("/comment", controller.AddComment)
 
 }
